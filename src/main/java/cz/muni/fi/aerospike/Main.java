@@ -13,54 +13,58 @@ public class Main {
     public static void main(String[] args) {
         AerospikeClient client = new AerospikeClient("0.0.0.0", 3000);
 
-        initializeBranches(client);
-/*
-        addCarToBranch(client, "Brno Turany", "Mercedes", "GL");
-        addCarToBranch(client, "Brno Turany", "Audi", "A3");
-        addCarToBranch(client, "Brno Turany", "Mercedes", "C3");
-        addCarToBranch(client, "Praha Zizkov", "Skoda", "Fabia");
-        addCarToBranch(client, "Praha Zizkov", "Skoda", "Felicia");
-        addCarToBranch(client, "Praha Zizkov", "Audi", "A5");
-        addCarToBranch(client, "Praha Zizkov", "Fiat", "Multipla");
-*/
+//        deleteAll(client, "Cars");
+//        deleteAll(client, "Branches");
 
-
-        System.out.println("All branches:");
-        client.scanAll(null, "test", "Branches", new ScanCallback() {
-            public void scanCallback(Key key, Record record) throws AerospikeException {
-                System.out.println(record.bins);
-            }
-        });
-
-
-        System.out.println("Cars sold in Brno Turany:");
-
-        client.createIndex(null, "test", "Cars", "branch_index", "branch", IndexType.STRING).waitTillComplete();
-
-        Statement stmt = new Statement();
-        stmt.setNamespace("test");
-        stmt.setSetName("Cars");
-        stmt.setFilters(Filter.equal("branch", "Brno Turany"));
-
-        RecordSet recordSet = client.query(null, stmt);
-        while (recordSet.next()) {
-            Record record = recordSet.getRecord();
-            System.out.println("rec som zabil " + record.bins);
-        }
-
-        //branch with max cars
-        System.out.println("Map reduce - most cars sold in a single branch");
-        stmt = new Statement();
-        stmt.setNamespace("test");
-        stmt.setSetName("Branches");
-
-        LuaConfig.SourceDirectory = "udf";
-        client.register(null, "udf/carCount.lua", "carCount.lua", Language.LUA);
-
-        ResultSet resultSet = client.queryAggregate(null, stmt, "carCount", "findMax");
-        while (resultSet.next()) {
-            System.out.println(resultSet.getObject());
-        }
+//        initializeBranches(client);
+//
+//        addCarToBranch(client, "Brno Turany", "Mercedes", "GL");
+//        addCarToBranch(client, "Brno Turany", "Audi", "A3");
+//        addCarToBranch(client, "Brno Turany", "Mercedes", "C3");
+//        addCarToBranch(client, "Praha Zizkov", "Skoda", "Fabia");
+//        addCarToBranch(client, "Praha Zizkov", "Skoda", "Felicia");
+//        addCarToBranch(client, "Praha Zizkov", "Audi", "A5");
+//        addCarToBranch(client, "Praha Zizkov", "Fiat", "Multipla");
+//
+//
+//
+//        System.out.println("All branches:");
+//        client.scanAll(null, "test", "Branches", new ScanCallback() {
+//            public void scanCallback(Key key, Record record) throws AerospikeException {
+//                System.out.println(record.bins);
+//            }
+//        });
+//
+//
+//
+//        System.out.println("Cars sold in Brno Turany:");
+//
+//        client.createIndex(null, "test", "Cars", "branch_index", "branch", IndexType.STRING).waitTillComplete();
+//
+//        Statement stmt = new Statement();
+//        stmt.setNamespace("test");
+//        stmt.setSetName("Cars");
+//        stmt.setFilters(Filter.equal("branch", "Brno Turany"));
+//
+//        RecordSet recordSet = client.query(null, stmt);
+//        while (recordSet.next()) {
+//            Record record = recordSet.getRecord();
+//            System.out.println("rec som zabil " + record.bins);
+//        }
+//
+//        //branch with max cars
+//        System.out.println("Map reduce - most cars sold in a single branch");
+//        stmt = new Statement();
+//        stmt.setNamespace("test");
+//        stmt.setSetName("Branches");
+//
+//        LuaConfig.SourceDirectory = "udf";
+//        client.register(null, "udf/carCount.lua", "carCount.lua", Language.LUA);
+//
+//        ResultSet resultSet = client.queryAggregate(null, stmt, "carCount", "findMax");
+//        while (resultSet.next()) {
+//            System.out.println(resultSet.getObject());
+//        }
 
         client.close();
     }
@@ -117,6 +121,14 @@ public class Main {
 
             client.put(wPolicy, key2, bin1, bin2, bin3, bin4);
         }
+    }
+
+    private static void deleteAll(final AerospikeClient client, String set) {
+        client.scanAll(null, "test", set, new ScanCallback() {
+            public void scanCallback(Key key, Record record) throws AerospikeException {
+                client.delete(null, key);
+            }
+        });
     }
 
     private static Key keyForBranch(String branch) {
